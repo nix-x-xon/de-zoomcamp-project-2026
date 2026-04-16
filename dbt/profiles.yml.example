@@ -1,0 +1,21 @@
+energy_platform:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: your-gcp-project-id
+      dataset: energy_marts
+      keyfile: /absolute/path/to/gcp-key.json
+      location: europe-central2
+      threads: 4
+      timeout_seconds: 300
+    prod:
+      type: bigquery
+      method: service-account
+      project: your-gcp-project-id
+      dataset: energy_marts_prod
+      keyfile: /absolute/path/to/gcp-key.json
+      location: europe-central2
+      threads: 8
+      timeout_seconds: 300

@@ -1,0 +1,52 @@
+id: load_to_bq
+namespace: energy.load
+description: Load partitioned parquet files from GCS into BigQuery raw tables.
+
+inputs:
+  - id: run_date
+    type: STRING
+    defaults: "{{ now() | date('yyyy-MM-dd') }}"
+
+tasks:
+  - id: load_pse_demand
+    type: io.kestra.plugin.gcp.bigquery.Load
+    projectId: "{{ vars.gcp_project }}"
+    destinationTable: "{{ vars.gcp_project }}.energy_raw.pse_demand"
+    from: "gs://{{ vars.gcs_bucket }}/pse/demand/dt={{ inputs.run_date }}/*.parquet"
+    format: PARQUET
+    writeDisposition: WRITE_APPEND
+    timePartitioning:
+      type: DAY
+      field: ingested_at
+
+  - id: load_entsoe_prices
+    type: io.kestra.plugin.gcp.bigquery.Load
+    projectId: "{{ vars.gcp_project }}"
+    destinationTable: "{{ vars.gcp_project }}.energy_raw.entsoe_prices_pl"
+    from: "gs://{{ vars.gcs_bucket }}/entsoe/prices_pl/dt={{ inputs.run_date }}/*.parquet"
+    format: PARQUET
+    writeDisposition: WRITE_APPEND
+    timePartitioning:
+      type: DAY
+      field: timestamp
+    clusteringFields:
+      - country
+
+  - id: load_yahoo
+    type: io.kestra.plugin.gcp.bigquery.Load
+    projectId: "{{ vars.gcp_project }}"
+    destinationTable: "{{ vars.gcp_project }}.energy_raw.yahoo_prices"
+    from: "gs://{{ vars.gcs_bucket }}/yahoo/prices/dt={{ inputs.run_date }}/*.parquet"
+    format: PARQUET
+    writeDisposition: WRITE_APPEND
+    timePartitioning:
+      type: DAY
+      field: date
+    clusteringFields:
+      - ticker
+
+  - id: run_dbt
+    type: io.kestra.plugin.dbt.cli.DbtCLI
+    commands:
+      - dbt run --project-dir /app/dbt --profiles-dir /app/dbt
+      - dbt test --project-dir /app/dbt --profiles-dir /app/dbt

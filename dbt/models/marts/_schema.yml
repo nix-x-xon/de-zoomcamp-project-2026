@@ -1,0 +1,75 @@
+version: 2
+
+models:
+  - name: fct_daily_prices
+    description: "Daily aggregated day-ahead electricity prices per country."
+    columns:
+      - name: price_date
+        tests: [not_null]
+      - name: country
+        tests: [not_null]
+      - name: avg_price_eur_mwh
+        tests: [not_null]
+
+  - name: fct_commodity_drivers
+    description: "Daily commodity and FX prices with 5d/20d returns."
+    columns:
+      - name: price_date
+        tests: [not_null]
+      - name: ticker
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['EURPLN', 'USDPLN', 'TTF_GAS', 'BRENT', 'COAL_API2']
+
+  - name: fct_intraday_demand
+    description: "15-minute intraday Polish grid demand (from Kafka stream) with 1-hour rolling average."
+    columns:
+      - name: demand_date
+        tests: [not_null]
+      - name: interval_id
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 96
+      - name: demand_mw
+        tests: [not_null]
+
+  - name: fct_eu_daily_by_region
+    description: "Daily price & generation aggregates per bidding zone, tagged with region (Eastern/Southern)."
+    columns:
+      - name: date
+        tests: [not_null]
+      - name: region
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Eastern', 'Southern']
+      - name: zone_code
+        tests: [not_null]
+
+  - name: fct_eu_duck_curve
+    description: "Hourly price profile by zone — used to visualise the Southern duck curve vs Eastern flat profile."
+    columns:
+      - name: date
+        tests: [not_null]
+      - name: hour_utc
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 23
+      - name: region
+        tests: [not_null]
+
+  - name: fct_eu_regional_summary
+    description: "Region-level daily rollup (one row per region per day) for headline comparison tiles."
+    columns:
+      - name: date
+        tests: [not_null]
+      - name: region
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Eastern', 'Southern']

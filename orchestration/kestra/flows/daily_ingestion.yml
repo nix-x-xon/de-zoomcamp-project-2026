@@ -1,0 +1,55 @@
+id: daily_ingestion
+namespace: energy.ingestion
+description: Daily incremental fetch of PSE, ENTSO-E, and Yahoo Finance data into GCS.
+
+inputs:
+  - id: run_date
+    type: STRING
+    defaults: "{{ now() | date('yyyy-MM-dd') }}"
+
+tasks:
+  - id: fetch_pse
+    type: io.kestra.plugin.docker.Run
+    image: de-zoomcamp-ingestion:latest
+    commands:
+      - src.fetch_pse
+      - --start={{ inputs.run_date }}
+      - --end={{ inputs.run_date }}
+    env:
+      GCS_BUCKET: "{{ vars.gcs_bucket }}"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+    volumes:
+      - "{{ vars.gcp_key_path }}:/tmp/gcp-key.json:ro"
+
+  - id: fetch_entsoe_pl
+    type: io.kestra.plugin.docker.Run
+    image: de-zoomcamp-ingestion:latest
+    commands:
+      - src.fetch_entsoe
+      - --country=PL
+      - --start={{ inputs.run_date }}
+      - --end={{ inputs.run_date }}
+    env:
+      GCS_BUCKET: "{{ vars.gcs_bucket }}"
+      ENTSOE_API_KEY: "{{ secret('ENTSOE_API_KEY') }}"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+    volumes:
+      - "{{ vars.gcp_key_path }}:/tmp/gcp-key.json:ro"
+
+  - id: fetch_yahoo
+    type: io.kestra.plugin.docker.Run
+    image: de-zoomcamp-ingestion:latest
+    commands:
+      - src.fetch_yahoo
+      - --start={{ inputs.run_date }}
+      - --end={{ inputs.run_date }}
+    env:
+      GCS_BUCKET: "{{ vars.gcs_bucket }}"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+    volumes:
+      - "{{ vars.gcp_key_path }}:/tmp/gcp-key.json:ro"
+
+triggers:
+  - id: daily_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 6 * * *"  # 06:00 UTC daily

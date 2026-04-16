@@ -1,0 +1,66 @@
+id: spark_daily
+namespace: energy.spark
+description: |
+  Daily incremental ENTSO-E fetch for EU zones, raw BQ load, wide-transform,
+  and dbt refresh. Runs 07:00 UTC (ENTSO-E publishes final day-ahead prices
+  around 12:45 CET day-before; generation has ~1h delay). 07:00 UTC is a safe margin.
+
+inputs:
+  - id: run_date
+    type: STRING
+    defaults: "{{ now() | dateAdd(-1, 'DAYS') | date('yyyy-MM-dd') }}"
+
+tasks:
+  - id: fetch_eu
+    type: io.kestra.plugin.docker.Run
+    image: de-zoomcamp-spark:latest
+    commands:
+      - jobs.incremental_entsoe
+      - --date={{ inputs.run_date }}
+    env:
+      GCS_BUCKET: "{{ vars.gcs_bucket }}"
+      SPARK_TEMP_BUCKET: "{{ vars.spark_temp_bucket }}"
+      ENTSOE_API_KEY: "{{ secret('ENTSOE_API_KEY') }}"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+    volumes:
+      - "{{ vars.gcp_key_path }}:/tmp/gcp-key.json:ro"
+
+  - id: load_to_bq
+    type: io.kestra.plugin.docker.Run
+    image: de-zoomcamp-spark:latest
+    commands:
+      - jobs.load_raw_to_bq
+      - --date={{ inputs.run_date }}
+    env:
+      GCS_BUCKET: "{{ vars.gcs_bucket }}"
+      SPARK_TEMP_BUCKET: "{{ vars.spark_temp_bucket }}"
+      GCP_PROJECT: "{{ vars.gcp_project }}"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+    volumes:
+      - "{{ vars.gcp_key_path }}:/tmp/gcp-key.json:ro"
+
+  - id: transform_wide
+    type: io.kestra.plugin.docker.Run
+    image: de-zoomcamp-spark:latest
+    commands:
+      - jobs.transform_eu_wide
+      - --mode=incremental
+      - --date={{ inputs.run_date }}
+    env:
+      GCS_BUCKET: "{{ vars.gcs_bucket }}"
+      SPARK_TEMP_BUCKET: "{{ vars.spark_temp_bucket }}"
+      GCP_PROJECT: "{{ vars.gcp_project }}"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+    volumes:
+      - "{{ vars.gcp_key_path }}:/tmp/gcp-key.json:ro"
+
+  - id: run_dbt
+    type: io.kestra.plugin.dbt.cli.DbtCLI
+    commands:
+      - dbt run --project-dir /app/dbt --profiles-dir /app/dbt --select +int_eu_hourly_with_region +fct_eu_daily_by_region +fct_eu_duck_curve +fct_eu_regional_summary
+      - dbt test --project-dir /app/dbt --profiles-dir /app/dbt --select fct_eu_daily_by_region fct_eu_duck_curve fct_eu_regional_summary
+
+triggers:
+  - id: daily_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 7 * * *"

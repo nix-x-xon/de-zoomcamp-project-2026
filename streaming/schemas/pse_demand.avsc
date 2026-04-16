@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "PseDemand",
+  "namespace": "com.dezoomcamp.energy",
+  "doc": "Polish grid real-time demand observation (15-minute interval).",
+  "fields": [
+    {"name": "event_ts",     "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "demand_date",  "type": {"type": "int",  "logicalType": "date"}},
+    {"name": "interval_id",  "type": "int", "doc": "15-min interval within day (1-96)"},
+    {"name": "demand_mw",    "type": "double"},
+    {"name": "source",       "type": "string", "default": "PSE"},
+    {"name": "ingested_at",  "type": {"type": "long", "logicalType": "timestamp-millis"}}
+  ]
+}

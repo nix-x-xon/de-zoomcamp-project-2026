@@ -1,0 +1,64 @@
+id: spark_backfill
+namespace: energy.spark
+description: |
+  One-shot historical backfill of ENTSO-E prices + generation for EU bidding zones,
+  followed by raw BQ load and wide-table Spark transform.
+  Run manually; not on a schedule.
+
+inputs:
+  - id: start_year
+    type: INT
+    defaults: 2020
+  - id: end_year
+    type: INT
+    defaults: 2025
+
+tasks:
+  - id: backfill
+    type: io.kestra.plugin.docker.Run
+    image: de-zoomcamp-spark:latest
+    commands:
+      - jobs.backfill_entsoe
+      - --start={{ inputs.start_year }}
+      - --end={{ inputs.end_year }}
+    env:
+      GCS_BUCKET: "{{ vars.gcs_bucket }}"
+      SPARK_TEMP_BUCKET: "{{ vars.spark_temp_bucket }}"
+      ENTSOE_API_KEY: "{{ secret('ENTSOE_API_KEY') }}"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+    volumes:
+      - "{{ vars.gcp_key_path }}:/tmp/gcp-key.json:ro"
+
+  - id: load_to_bq
+    type: io.kestra.plugin.docker.Run
+    image: de-zoomcamp-spark:latest
+    commands:
+      - jobs.load_raw_to_bq
+    env:
+      GCS_BUCKET: "{{ vars.gcs_bucket }}"
+      SPARK_TEMP_BUCKET: "{{ vars.spark_temp_bucket }}"
+      GCP_PROJECT: "{{ vars.gcp_project }}"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+    volumes:
+      - "{{ vars.gcp_key_path }}:/tmp/gcp-key.json:ro"
+
+  - id: transform_wide
+    type: io.kestra.plugin.docker.Run
+    image: de-zoomcamp-spark:latest
+    commands:
+      - jobs.transform_eu_wide
+      - --mode=full
+    env:
+      GCS_BUCKET: "{{ vars.gcs_bucket }}"
+      SPARK_TEMP_BUCKET: "{{ vars.spark_temp_bucket }}"
+      GCP_PROJECT: "{{ vars.gcp_project }}"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+    volumes:
+      - "{{ vars.gcp_key_path }}:/tmp/gcp-key.json:ro"
+
+  - id: dbt_seed_and_run
+    type: io.kestra.plugin.dbt.cli.DbtCLI
+    commands:
+      - dbt seed --project-dir /app/dbt --profiles-dir /app/dbt
+      - dbt run --project-dir /app/dbt --profiles-dir /app/dbt
+      - dbt test --project-dir /app/dbt --profiles-dir /app/dbt

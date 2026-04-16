@@ -1,0 +1,15 @@
+zone_code,country,region,timezone,primary_fuel,zone_name
+PL,Poland,Eastern,Europe/Warsaw,coal,Poland
+CZ,Czech Republic,Eastern,Europe/Prague,nuclear_lignite,Czech Republic
+HU,Hungary,Eastern,Europe/Budapest,nuclear_solar,Hungary
+RO,Romania,Eastern,Europe/Bucharest,diversified,Romania
+ES,Spain,Southern,Europe/Madrid,renewables,Spain
+PT,Portugal,Southern,Europe/Lisbon,renewables,Portugal
+GR,Greece,Southern,Europe/Athens,gas_solar,Greece
+IT_NORD,Italy,Southern,Europe/Rome,gas,Italy - North
+IT_CNOR,Italy,Southern,Europe/Rome,gas,Italy - Centre-North
+IT_CSUD,Italy,Southern,Europe/Rome,gas,Italy - Centre-South
+IT_SUD,Italy,Southern,Europe/Rome,solar_wind,Italy - South
+IT_CALA,Italy,Southern,Europe/Rome,solar_wind,Italy - Calabria
+IT_SICI,Italy,Southern,Europe/Rome,solar_gas,Italy - Sicily
+IT_SARD,Italy,Southern,Europe/Rome,solar_gas,Italy - Sardinia

@@ -1,0 +1,21 @@
+version: 2
+
+seeds:
+  - name: dim_region_mapping
+    description: "Bidding-zone-to-region mapping for EU ENTSO-E analysis."
+    config:
+      column_types:
+        zone_code: string
+        country: string
+        region: string
+        timezone: string
+        primary_fuel: string
+        zone_name: string
+    columns:
+      - name: zone_code
+        tests: [not_null, unique]
+      - name: region
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Eastern', 'Southern']

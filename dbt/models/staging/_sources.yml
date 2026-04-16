@@ -1,0 +1,24 @@
+version: 2
+
+sources:
+  - name: energy_raw
+    database: "{{ var('gcp_project') }}"
+    schema: energy_raw
+    description: "Raw landed data from PSE, ENTSO-E, and Yahoo Finance"
+    tables:
+      - name: pse_demand
+        description: "Polish grid demand by 15-minute interval"
+      - name: entsoe_prices_pl
+        description: "Polish day-ahead electricity prices (EUR/MWh)"
+      - name: entsoe_generation_pl
+        description: "Polish generation by fuel type (MW)"
+      - name: yahoo_prices
+        description: "FX rates and commodity futures prices"
+      - name: pse_demand_stream
+        description: "Real-time 15-minute demand stream consumed from Kafka (topic pse.demand.v1)"
+      - name: entsoe_eu_prices
+        description: "Hourly day-ahead prices for EU bidding zones (Spark-loaded)"
+      - name: entsoe_eu_generation
+        description: "Hourly generation by fuel type for EU bidding zones (Spark-loaded)"
+      - name: entsoe_eu_hourly_wide
+        description: "Spark-transformed wide table: prices + pivoted generation + derived metrics per zone-hour"

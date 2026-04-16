@@ -1,0 +1,36 @@
+id: streaming_stack
+namespace: energy.streaming
+description: |
+  Long-running producer + consumer pair for the PSE real-time demand stream.
+  Kestra launches both containers; they stay up and process events continuously.
+  Use this as a one-shot "start streaming" trigger.
+
+tasks:
+  - id: run_producer
+    type: io.kestra.plugin.docker.Run
+    image: de-zoomcamp-streaming:latest
+    wait: false
+    commands:
+      - src.producer
+    env:
+      KAFKA_BOOTSTRAP: "kafka:29092"
+      SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      TOPIC: "pse.demand.v1"
+      POLL_INTERVAL: "60"
+    networkMode: "de-zoomcamp-project_default"
+
+  - id: run_consumer
+    type: io.kestra.plugin.docker.Run
+    image: de-zoomcamp-streaming:latest
+    wait: false
+    commands:
+      - src.consumer
+    env:
+      KAFKA_BOOTSTRAP: "kafka:29092"
+      SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      TOPIC: "pse.demand.v1"
+      GROUP_ID: "bq-sink-v1"
+      BATCH_SIZE: "200"
+      GCP_PROJECT: "{{ vars.gcp_project }}"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+    networkMode: "de-zoomcamp-project_default"

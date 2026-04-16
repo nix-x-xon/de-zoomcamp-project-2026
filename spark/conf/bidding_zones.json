@@ -1,0 +1,21 @@
+{
+  "description": "Bidding zones covered by the EU-wide ENTSO-E pipeline. Codes use entsoe-py Area enum names.",
+  "zones": [
+    {"code": "PL",       "country": "Poland",         "region": "Eastern",  "timezone": "Europe/Warsaw",    "primary_fuel": "coal"},
+    {"code": "CZ",       "country": "Czech Republic", "region": "Eastern",  "timezone": "Europe/Prague",    "primary_fuel": "nuclear_lignite"},
+    {"code": "HU",       "country": "Hungary",        "region": "Eastern",  "timezone": "Europe/Budapest",  "primary_fuel": "nuclear_solar"},
+    {"code": "RO",       "country": "Romania",        "region": "Eastern",  "timezone": "Europe/Bucharest", "primary_fuel": "diversified"},
+
+    {"code": "ES",       "country": "Spain",          "region": "Southern", "timezone": "Europe/Madrid",    "primary_fuel": "renewables"},
+    {"code": "PT",       "country": "Portugal",       "region": "Southern", "timezone": "Europe/Lisbon",    "primary_fuel": "renewables"},
+    {"code": "GR",       "country": "Greece",         "region": "Southern", "timezone": "Europe/Athens",    "primary_fuel": "gas_solar"},
+
+    {"code": "IT_NORD",  "country": "Italy",          "region": "Southern", "timezone": "Europe/Rome",      "primary_fuel": "gas", "zone_name": "North"},
+    {"code": "IT_CNOR",  "country": "Italy",          "region": "Southern", "timezone": "Europe/Rome",      "primary_fuel": "gas", "zone_name": "Centre-North"},
+    {"code": "IT_CSUD",  "country": "Italy",          "region": "Southern", "timezone": "Europe/Rome",      "primary_fuel": "gas", "zone_name": "Centre-South"},
+    {"code": "IT_SUD",   "country": "Italy",          "region": "Southern", "timezone": "Europe/Rome",      "primary_fuel": "solar_wind", "zone_name": "South"},
+    {"code": "IT_CALA",  "country": "Italy",          "region": "Southern", "timezone": "Europe/Rome",      "primary_fuel": "solar_wind", "zone_name": "Calabria"},
+    {"code": "IT_SICI",  "country": "Italy",          "region": "Southern", "timezone": "Europe/Rome",      "primary_fuel": "solar_gas", "zone_name": "Sicily"},
+    {"code": "IT_SARD",  "country": "Italy",          "region": "Southern", "timezone": "Europe/Rome",      "primary_fuel": "solar_gas", "zone_name": "Sardinia"}
+  ]
+}
