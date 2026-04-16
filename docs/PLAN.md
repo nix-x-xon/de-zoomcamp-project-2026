@@ -48,8 +48,21 @@ Source of truth: `.env` and `terraform/terraform.tfvars`.
 - [x] Partial EU prices loaded — 48,352 rows (PL + CZ so far; more coming)
 - [x] dbt: 8 non-EU-wide models built; 13/14 tests PASS (commodity ticker accepted_values fixed)
 
-### In flight
-- [ ] Spark EU backfill 2024-2025 across 14 zones — prices succeeding, generation failing per-zone with ValueError (entsoe-py 0.7.11 parse issue for some datasets). Will retry; currently on CZ.
+### Post-initial-commit session — completed
+- [x] Spark EU backfill (prices only, 2024-2025 × 14 zones) — `SKIP_GENERATION=1` flag added so failed-gen retries don't block. 338k price rows loaded to `energy_raw.entsoe_eu_prices`.
+- [x] Rewrote `stg_entsoe__eu_hourly_wide` to read prices-only + null fuel-mix cols, so all downstream EU marts still build.
+- [x] Full dbt run: 13/13 models pass. 25/25 data tests pass.
+- [x] 6 mart tables in `energy_marts_marts`: fct_daily_prices, fct_commodity_drivers, fct_eu_daily_by_region (10.2k rows), fct_eu_duck_curve (245.6k rows), fct_eu_regional_summary (1.5k rows), fct_intraday_demand.
+- [x] Docker-compose stack up — Kestra 1.3.10 + Kafka (fixed KRaft cluster UUID) + SR + UI + Postgres. All healthy.
+- [x] Dashboard guide (`dashboard/README.md`) rewritten with exact BQ tables + page-by-page chart list.
+- [x] Root README moved from "Scaffolding in progress" to live-pipeline status with known-limitation note.
+- [x] Commits: f7b16c8 initial, 4991107 API migrations/compat, 7922fdf hourly_wide rebase, 316a280 Kafka fix.
+
+### Remaining (user-driven)
+- [ ] Build the Looker Studio dashboard per `dashboard/README.md` — human-in-browser step.
+- [ ] Paste the shareable dashboard URL into `dashboard/README.md` and root README.
+- [ ] `git push origin main` — blocked in sandbox; run from your shell, or approve direct-push permission for Claude.
+- [ ] Screenshots of each dashboard page into `dashboard/screenshots/` for the submission.
 
 ### Pending — GCP bootstrap
 - [ ] `gcloud auth login` (**user action — interactive**, run as `! gcloud auth login`)

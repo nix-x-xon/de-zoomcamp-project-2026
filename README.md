@@ -98,8 +98,14 @@ cd dbt && dbt run && dbt test
 
 ## Dashboard
 
-Link: _(add after deployment)_
+See [`dashboard/README.md`](dashboard/README.md) for the Looker Studio setup, BigQuery source tables, and page-by-page chart list. Shareable link is pasted there after publishing.
+
+## Reproducibility
+
+Full step-by-step guide: [`docs/setup.md`](docs/setup.md). Expect ~30 min end-to-end on a machine with Docker Desktop, gcloud SDK, and Terraform already installed. An open GCP billing account is required.
 
 ## Status
 
-Scaffolding in progress.
+End-to-end pipeline live in production: GCP infra provisioned, all Docker images built, 3 years of PSE + ENTSO-E PL data ingested, 2 years (2024-2025) of prices across 14 EU bidding zones, all 13 dbt models build + 25 data tests pass. Streaming stack runs via `docker compose up -d`.
+
+Known limitation: ENTSO-E generation for non-PL zones in 2024-2025 returns payloads that `entsoe-py 0.7.11` cannot parse; the EU-wide fuel-mix columns (renewable share, residual load) are currently NULL. Polish generation is populated in full.

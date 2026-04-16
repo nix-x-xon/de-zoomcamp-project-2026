@@ -1,15 +1,53 @@
 # Dashboard
 
-The final dashboard is hosted on Looker Studio. Two required charts:
+Looker Studio report comparing **Eastern vs Southern European** electricity markets, with Polish detail panels.
 
-1. **Polish day-ahead electricity price vs. TTF gas futures** — dual-axis time series showing how gas prices drive electricity prices.
-2. **Generation mix share over time** — stacked area chart of wind/gas/coal/nuclear share of total Polish generation.
+## Live link
 
-## Links
+_paste the shareable Looker Studio URL here after publishing_
 
-- Live dashboard: _TBD_
-- BigQuery source: `project.energy_marts.fct_daily_prices` and `fct_commodity_drivers`
+## BigQuery sources
+
+Project: `de-zoomcamp-energy-mf01`
+
+| Purpose                            | Table                                            | Rows   |
+|------------------------------------|--------------------------------------------------|--------|
+| Regional headline tiles            | `energy_marts_marts.fct_eu_regional_summary`     | ~1,500 |
+| Per-zone daily detail              | `energy_marts_marts.fct_eu_daily_by_region`      | ~10,200 |
+| Duck-curve hourly profile          | `energy_marts_marts.fct_eu_duck_curve`           | ~245,600 |
+| Polish day-ahead daily             | `energy_marts_marts.fct_daily_prices`            | ~1,200 |
+| Commodity drivers (FX + futures)   | `energy_marts_marts.fct_commodity_drivers`       | ~4,200 |
+| Real-time Polish demand (streaming)| `energy_marts_marts.fct_intraday_demand`         | grows  |
+
+## Pages & charts
+
+### Page 1 — Regional overview
+1. **Scorecard**: `regional_avg_price_eur_mwh` grouped by `region` (Eastern / Southern), last 30 days. Source: `fct_eu_regional_summary`.
+2. **Time series (line)**: `regional_avg_price_eur_mwh` over `date`, series = `region`. Shows the Eastern–Southern spread.
+3. **Bar**: `regional_negative_price_hours` summed by `region` over last 90 days — highlights Southern duck-curve negative pricing.
+
+### Page 2 — Country drilldown
+4. **Stacked bar**: `avg_price_eur_mwh` per `country` per `date` (filtered to last 60 days). Source: `fct_eu_daily_by_region`.
+5. **Heatmap**: `avg_price_eur_mwh` by `zone_code` × `date`. Shows IT bidding-zone divergence.
+
+### Page 3 — Duck curve
+6. **Line**: `avg_price_eur_mwh` by `hour_utc`, one series per `region`. Source: `fct_eu_duck_curve`, filtered to spring/summer months (solar-heavy). Southern shows characteristic midday dip.
+
+### Page 4 — Poland & commodity drivers
+7. **Dual-axis line**: PL daily `avg_price_eur_mwh` (`fct_daily_prices`) vs `TTF_GAS` close (`fct_commodity_drivers` filtered to `ticker='TTF_GAS'`, date-joined).
+8. **Line**: `close` by `date` for `BRENT`, `NAT_GAS_HH`, `EURPLN` — commodity/FX drivers.
+
+### Page 5 — Real-time demand
+9. **Line**: `demand_mw` by `event_ts` from `fct_intraday_demand` (populated by the streaming stack at `docker compose up`).
+
+## Building it
+
+1. Go to https://lookerstudio.google.com/
+2. **Create → Data source → BigQuery** — pick `de-zoomcamp-energy-mf01` → `energy_marts_marts` → select tables above as sources.
+3. Build pages per the list above.
+4. **Share → Public to the web** (or domain-restricted to your grader). Paste the link at the top of this file.
+5. Export screenshots of each page into `dashboard/screenshots/` for the submission.
 
 ## Screenshots
 
-Add exported PNGs here after building the dashboard.
+_add PNGs for each page after publishing_

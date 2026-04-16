@@ -71,8 +71,8 @@ docker compose up -d
 ## 6. Backfill historical data
 
 ```bash
-docker run --rm \
-    -v $(pwd)/gcp-key.json:/tmp/gcp-key.json \
+MSYS_NO_PATHCONV=1 docker run --rm \
+    -v $(pwd)/gcp-key.json:/tmp/gcp-key.json:ro \
     -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json \
     -e GCS_BUCKET=$GCS_BUCKET \
     -e ENTSOE_API_KEY=$ENTSOE_API_KEY \
