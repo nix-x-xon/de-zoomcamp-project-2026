@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:15
@@ -66,7 +64,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      CLUSTER_ID: "de-zoomcamp-cluster-0001"
+      CLUSTER_ID: "4L6g3nShT-eMCtK--X86sw"
     volumes:
       - kafka-data:/var/lib/kafka/data
 
