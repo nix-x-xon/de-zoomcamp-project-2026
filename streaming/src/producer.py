@@ -23,24 +23,29 @@ from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroSerializer
 from confluent_kafka.serialization import MessageField, SerializationContext, StringSerializer
 
-PSE_URL = "https://api.raporty.pse.pl/api/zap-kse"
+PSE_URL = "https://api.raporty.pse.pl/api/his-wlk-cal"
 SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "pse_demand.avsc"
 
 
 def fetch_today() -> list[dict]:
     today = date.today().isoformat()
-    resp = httpx.get(PSE_URL, params={"$filter": f"doba eq '{today}'"}, timeout=30)
+    resp = httpx.get(PSE_URL, params={"$filter": f"business_date eq '{today}'"}, timeout=30)
     resp.raise_for_status()
     return resp.json().get("value", [])
 
 
+def _interval_id(dtime_str: str) -> int:
+    t = datetime.fromisoformat(dtime_str)
+    return (t.hour * 60 + t.minute) // 15 or 96
+
+
 def to_event(record: dict) -> dict:
-    ts = datetime.fromisoformat(record["udtczas"]).replace(tzinfo=timezone.utc)
+    ts = datetime.fromisoformat(record["dtime"]).replace(tzinfo=timezone.utc)
     return {
         "event_ts": int(ts.timestamp() * 1000),
         "demand_date": ts.date(),
-        "interval_id": int(record.get("znacznik", 0)),
-        "demand_mw": float(record["zap_kse"]),
+        "interval_id": _interval_id(record["dtime"]),
+        "demand_mw": float(record["demand"]),
         "source": "PSE",
         "ingested_at": int(datetime.now(timezone.utc).timestamp() * 1000),
     }
@@ -71,7 +76,7 @@ def main() -> None:
     while True:
         try:
             for raw in fetch_today():
-                interval = int(raw.get("znacznik", 0))
+                interval = _interval_id(raw["dtime"])
                 if interval in seen:
                     continue
                 event = to_event(raw)

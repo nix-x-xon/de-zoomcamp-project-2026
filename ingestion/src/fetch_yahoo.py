@@ -18,17 +18,20 @@ TICKERS = {
     "USDPLN": "USDPLN=X",
     "TTF_GAS": "TTF=F",
     "BRENT": "BZ=F",
-    "COAL_API2": "MTF=F",
+    "NAT_GAS_HH": "NG=F",
 }
 
 
 def run(start: date, end: date) -> None:
     frames = []
     for name, ticker in TICKERS.items():
-        df = yf.download(ticker, start=start, end=end, progress=False)
+        df = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=False)
         if df.empty:
             print(f"[yahoo] no data for {ticker}")
             continue
+        # yfinance 1.x returns a MultiIndex (field, ticker); collapse to single level.
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = [c[0] for c in df.columns]
         df = df.reset_index().rename(columns=str.lower)
         df["ticker"] = name
         frames.append(df[["date", "ticker", "open", "high", "low", "close", "volume"]])

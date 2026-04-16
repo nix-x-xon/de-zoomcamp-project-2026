@@ -30,9 +30,13 @@ def run(country: str, start: date, end: date) -> None:
                    partition_date=end)
 
     gen = client.query_generation(country, start=start_ts, end=end_ts, psr_type=None)
-    gen_df = gen.reset_index().melt(id_vars=gen.index.name or "index",
-                                    var_name="fuel_type",
-                                    value_name="generation_mw")
+    # In entsoe-py 0.7.x columns are MultiIndex (fuel_type, direction); drop direction.
+    gen.columns = [c[0] if isinstance(c, tuple) else c for c in gen.columns]
+    gen_df = gen.reset_index(names="timestamp").melt(
+        id_vars="timestamp",
+        var_name="fuel_type",
+        value_name="generation_mw",
+    )
     gen_df["country"] = country
     upload_parquet(gen_df, source="entsoe", dataset=f"generation_{country.lower()}",
                    partition_date=end)

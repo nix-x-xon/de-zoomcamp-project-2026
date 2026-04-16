@@ -38,8 +38,19 @@ def write_to_bq(df: DataFrame, table: str, partition_field: str, cluster_fields:
     )
 
 
+def _read_or_skip(spark: SparkSession, pattern: str):
+    try:
+        return spark.read.parquet(pattern)
+    except Exception as exc:  # pyspark raises AnalysisException for PATH_NOT_FOUND
+        log.warning("Skipping %s (%s)", pattern, exc.__class__.__name__)
+        return None
+
+
 def load_prices(spark: SparkSession, pattern: str, table: str) -> None:
-    df = spark.read.parquet(pattern).withColumn("date", F.to_date("timestamp"))
+    df = _read_or_skip(spark, pattern)
+    if df is None:
+        return
+    df = df.withColumn("date", F.to_date("timestamp"))
     cnt = df.count()
     if cnt == 0:
         log.warning("No price rows matched %s", pattern)
@@ -50,7 +61,10 @@ def load_prices(spark: SparkSession, pattern: str, table: str) -> None:
 
 
 def load_generation(spark: SparkSession, pattern: str, table: str) -> None:
-    df = spark.read.parquet(pattern).withColumn("date", F.to_date("timestamp"))
+    df = _read_or_skip(spark, pattern)
+    if df is None:
+        return
+    df = df.withColumn("date", F.to_date("timestamp"))
     cnt = df.count()
     if cnt == 0:
         log.warning("No generation rows matched %s", pattern)

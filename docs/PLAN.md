@@ -30,6 +30,26 @@ Source of truth: `.env` and `terraform/terraform.tfvars`.
 - [x] `CLAUDE.md` added with resume protocol, undercover mode, squash-merge policy
 - [x] `terraform/main.tf` patched: added 4 raw BQ tables (`pse_demand`, `entsoe_prices_pl`, `yahoo_prices`, `pse_demand_stream`)
 - [x] `orchestration/kestra/flows/daily_ingestion.yml` patched: added GCP key volume mount to fetch_pse, fetch_entsoe_pl, fetch_yahoo
+- [x] GCP project, SA, APIs, service account key all created (Phase 1)
+- [x] `terraform apply` complete — 6 raw BQ tables + 2 GCS buckets + 2 datasets live
+- [x] Initial commit pushed to https://github.com/nix-x-xon/de-zoomcamp-project-2026
+- [x] Branch renamed master → main
+- [x] Fixed PSE API endpoint: retired `zap-kse` → `his-wlk-cal` in `ingestion/src/fetch_pse.py` and `streaming/src/producer.py`
+- [x] Upgraded `entsoe-py 0.6.7 → 0.7.11` (old version couldn't reach 2025-11+ data) and `yfinance 0.2.40 → 1.3.0`
+- [x] Replaced delisted Yahoo ticker `MTF=F` with `NG=F` (Henry Hub gas)
+- [x] Fixed ENTSO-E generation melt for 0.7.x MultiIndex columns
+- [x] Fixed Spark Dockerfile: base image `apache/spark-py:v3.5.0 → apache/spark:3.5.8-python3`, entrypoint `python → python3`, GCS connector URL moved to Maven Central
+- [x] dbt `deps` + `seed` — `dim_region_mapping` (16 rows) loaded to `energy_marts_seeds`
+- [x] Yahoo backfill complete — 4,173 rows loaded to `energy_raw.yahoo_prices`
+- [x] PSE v2 backfill (clean schema) — 64,120 rows in `energy_raw.pse_demand`
+- [x] ENTSO-E PL prices backfill — 42,741 rows in `energy_raw.entsoe_prices_pl`
+- [x] ENTSO-E PL generation backfill — 2,079,162 rows in `energy_raw.entsoe_generation_pl`
+- [x] Patched `spark/jobs/load_raw_to_bq.py` to skip missing GCS paths gracefully
+- [x] Partial EU prices loaded — 48,352 rows (PL + CZ so far; more coming)
+- [x] dbt: 8 non-EU-wide models built; 13/14 tests PASS (commodity ticker accepted_values fixed)
+
+### In flight
+- [ ] Spark EU backfill 2024-2025 across 14 zones — prices succeeding, generation failing per-zone with ValueError (entsoe-py 0.7.11 parse issue for some datasets). Will retry; currently on CZ.
 
 ### Pending — GCP bootstrap
 - [ ] `gcloud auth login` (**user action — interactive**, run as `! gcloud auth login`)

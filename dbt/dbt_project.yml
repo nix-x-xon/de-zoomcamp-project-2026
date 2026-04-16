@@ -4,6 +4,10 @@ config-version: 2
 
 profile: energy_platform
 
+vars:
+  gcp_project: de-zoomcamp-energy-mf01
+  raw_dataset: energy_raw
+
 model-paths: ["models"]
 seed-paths: ["seeds"]
 test-paths: ["tests"]

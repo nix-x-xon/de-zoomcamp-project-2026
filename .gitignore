@@ -13,6 +13,8 @@ venv/
 *.tfvars
 !*.tfvars.example
 .terraform.lock.hcl
+tfplan
+*.tfplan
 
 # dbt
 dbt/target/
@@ -35,3 +37,6 @@ gcp-key*.json
 .vscode/
 .idea/
 *.swp
+
+# Claude Code local state
+.claude/

@@ -20,7 +20,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['EURPLN', 'USDPLN', 'TTF_GAS', 'BRENT', 'COAL_API2']
+              values: ['EURPLN', 'USDPLN', 'TTF_GAS', 'BRENT', 'NAT_GAS_HH']
 
   - name: fct_intraday_demand
     description: "15-minute intraday Polish grid demand (from Kafka stream) with 1-hour rolling average."

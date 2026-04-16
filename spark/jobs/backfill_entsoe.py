@@ -111,11 +111,12 @@ def run(start_year: int, end_year: int, zones_filter: list[str] | None = None) -
                 write_year(spark, prices, code, year, "eu_prices")
             except Exception as exc:
                 log.error("prices %s %s failed: %s", code, year, exc)
-            try:
-                gen = fetch_generation(client, code, start_ts, end_ts)
-                write_year(spark, gen, code, year, "eu_generation")
-            except Exception as exc:
-                log.error("generation %s %s failed: %s", code, year, exc)
+            if os.environ.get("SKIP_GENERATION", "0") != "1":
+                try:
+                    gen = fetch_generation(client, code, start_ts, end_ts)
+                    write_year(spark, gen, code, year, "eu_generation")
+                except Exception as exc:
+                    log.error("generation %s %s failed: %s", code, year, exc)
             done.add(key)
             save_checkpoint(bucket, done)
 
