@@ -6,6 +6,10 @@ Looker Studio report comparing **Eastern vs Southern European** electricity mark
 
 _paste the shareable Looker Studio URL here after publishing_
 
+## Known limitation
+
+Fuel-mix columns (`avg_renewable_share`, `avg_fossil_share`, `regional_*_share`, `total_generation_mwh`, `avg_residual_load_mw`) are currently **NULL** for non-PL zones — the ENTSO-E generation endpoint returns payloads `entsoe-py 0.7.11` can't parse for post-2024 data. Build the generation-based panels last so you notice the gap. Price-only comparisons (the Eastern-vs-Southern story) are fully populated.
+
 ## BigQuery sources
 
 Project: `de-zoomcamp-energy-mf01`

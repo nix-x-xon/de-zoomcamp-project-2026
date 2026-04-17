@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from datetime import date
 from pathlib import Path
 
@@ -23,14 +24,17 @@ def upload_parquet(
     bucket_name = bucket or os.environ["GCS_BUCKET"]
     partition_date = partition_date or date.today()
 
-    local_dir = Path("/tmp") / source / dataset
-    local_dir.mkdir(parents=True, exist_ok=True)
-    local_path = local_dir / f"{partition_date.isoformat()}.parquet"
-    df.to_parquet(local_path, index=False)
-
-    blob_path = f"{source}/{dataset}/dt={partition_date.isoformat()}/data.parquet"
-    client = storage.Client()
-    client.bucket(bucket_name).blob(blob_path).upload_from_filename(local_path)
+    # Use the OS temp dir (works on Linux, macOS, Windows) and clean up after upload
+    # so long backfills don't fill /tmp.
+    with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tmp:
+        local_path = Path(tmp.name)
+    try:
+        df.to_parquet(local_path, index=False)
+        blob_path = f"{source}/{dataset}/dt={partition_date.isoformat()}/data.parquet"
+        client = storage.Client()
+        client.bucket(bucket_name).blob(blob_path).upload_from_filename(local_path)
+    finally:
+        local_path.unlink(missing_ok=True)
 
     uri = f"gs://{bucket_name}/{blob_path}"
     print(f"Uploaded {len(df)} rows → {uri}")

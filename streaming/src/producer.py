@@ -64,7 +64,9 @@ def main() -> None:
 
     producer = Producer({"bootstrap.servers": bootstrap, "linger.ms": 100})
 
-    seen: set[int] = set()
+    # Key on (date, interval) so interval_id=1 on a new UTC day isn't skipped
+    # because yesterday's interval_id=1 is still in the set.
+    seen: set[tuple[str, int]] = set()
 
     def on_delivery(err, msg):
         if err:
@@ -73,25 +75,31 @@ def main() -> None:
             print(f"[producer] {msg.topic()}[{msg.partition()}]@{msg.offset()}")
 
     print(f"[producer] starting → {bootstrap} topic={topic}")
-    while True:
-        try:
-            for raw in fetch_today():
-                interval = _interval_id(raw["dtime"])
-                if interval in seen:
-                    continue
-                event = to_event(raw)
-                key = f"{event['demand_date']}-{event['interval_id']}"
-                producer.produce(
-                    topic=topic,
-                    key=key_ser(key, SerializationContext(topic, MessageField.KEY)),
-                    value=avro_ser(event, SerializationContext(topic, MessageField.VALUE)),
-                    on_delivery=on_delivery,
-                )
-                seen.add(interval)
-            producer.poll(0)
-        except Exception as exc:
-            print(f"[producer] poll error: {exc}")
-        time.sleep(poll_interval)
+    try:
+        while True:
+            try:
+                for raw in fetch_today():
+                    key_tuple = (raw["business_date"], _interval_id(raw["dtime"]))
+                    if key_tuple in seen:
+                        continue
+                    event = to_event(raw)
+                    key = f"{event['demand_date']}-{event['interval_id']}"
+                    producer.produce(
+                        topic=topic,
+                        key=key_ser(key, SerializationContext(topic, MessageField.KEY)),
+                        value=avro_ser(event, SerializationContext(topic, MessageField.VALUE)),
+                        on_delivery=on_delivery,
+                    )
+                    seen.add(key_tuple)
+                producer.poll(0)
+            except Exception as exc:
+                print(f"[producer] poll error: {exc}")
+            time.sleep(poll_interval)
+    finally:
+        # Ensure buffered messages ship before the process exits.
+        remaining = producer.flush(timeout=10)
+        if remaining > 0:
+            print(f"[producer] shutdown with {remaining} undelivered messages")
 
 
 if __name__ == "__main__":

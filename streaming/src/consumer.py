@@ -89,17 +89,25 @@ def main() -> None:
             if len(buffer) >= batch_size:
                 errors = bq.insert_rows_json(table_id, buffer)
                 if errors:
-                    print(f"[consumer] BQ errors: {errors}")
+                    # Don't clear the buffer and don't commit offsets — the
+                    # next poll will retry the same batch. Downstream dedup
+                    # in stg_pse__demand_stream is idempotent on
+                    # (demand_date, interval_id), so BQ duplicates from a
+                    # retry are trimmed at the staging layer.
+                    print(f"[consumer] BQ errors, holding batch: {errors}")
                 else:
                     print(f"[consumer] flushed {len(buffer)} rows → {table_id}")
                     consumer.commit(asynchronous=False)
-                buffer.clear()
+                    buffer.clear()
     except KeyboardInterrupt:
         print("[consumer] shutting down")
     finally:
         if buffer:
-            bq.insert_rows_json(table_id, buffer)
-            consumer.commit(asynchronous=False)
+            errors = bq.insert_rows_json(table_id, buffer)
+            if errors:
+                print(f"[consumer] final flush FAILED, {len(buffer)} rows lost: {errors}")
+            else:
+                consumer.commit(asynchronous=False)
         consumer.close()
 
 

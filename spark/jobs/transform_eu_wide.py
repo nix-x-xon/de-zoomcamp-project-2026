@@ -19,6 +19,7 @@ import logging
 import os
 from datetime import date, timedelta
 
+from google.cloud import bigquery
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
@@ -120,18 +121,47 @@ def transform(spark: SparkSession, project: str, date_filter: str | None) -> Dat
     return windowed
 
 
-def write_output(df: DataFrame, project: str) -> None:
+def write_output(df: DataFrame, project: str, mode: str) -> None:
     table = f"{project}.energy_raw.entsoe_eu_hourly_wide"
-    (
-        df.write.format("bigquery")
-        .option("table", table)
-        .option("partitionField", "date")
-        .option("partitionType", "MONTH")
-        .option("clusteredFields", "zone")
-        .option("writeMethod", "direct")
-        .mode("append")
-        .save()
-    )
+
+    if mode == "full":
+        # Full rebuild: overwrite the whole table.
+        (
+            df.write.format("bigquery")
+            .option("table", table)
+            .option("partitionField", "date")
+            .option("partitionType", "MONTH")
+            .option("clusteredFields", "zone")
+            .option("writeMethod", "direct")
+            .mode("overwrite")
+            .save()
+        )
+    else:
+        # Incremental: delete overlapping date partitions before append so
+        # re-running the same --date is idempotent.
+        dates = [r["date"].isoformat() for r in df.select("date").distinct().collect()]
+        if dates:
+            client = bigquery.Client(project=project)
+            try:
+                client.get_table(table)
+                in_list = ",".join(f"DATE '{d}'" for d in dates)
+                client.query(
+                    f"DELETE FROM `{project}.energy_raw.entsoe_eu_hourly_wide` "
+                    f"WHERE date IN ({in_list})"
+                ).result()
+                log.info("Deleted %d overlapping partitions before append", len(dates))
+            except Exception:
+                log.info("Target %s does not exist yet; skipping pre-delete", table)
+        (
+            df.write.format("bigquery")
+            .option("table", table)
+            .option("partitionField", "date")
+            .option("partitionType", "MONTH")
+            .option("clusteredFields", "zone")
+            .option("writeMethod", "direct")
+            .mode("append")
+            .save()
+        )
     log.info("Wrote wide table -> %s", table)
 
 
@@ -145,7 +175,7 @@ def run(mode: str, date_arg: str | None) -> None:
     else:
         log.info("Full transform")
     wide = transform(spark, project, date_filter)
-    write_output(wide, project)
+    write_output(wide, project, mode)
     spark.stop()
 
 

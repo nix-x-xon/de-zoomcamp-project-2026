@@ -9,6 +9,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import time
 from datetime import date, datetime, timedelta
 
 import httpx
@@ -17,6 +18,8 @@ import pandas as pd
 from .gcs import upload_parquet
 
 PSE_BASE = "https://api.raporty.pse.pl/api"
+FETCH_RETRIES = 3
+RETRY_BASE_DELAY = 2
 
 
 def _interval_id_from_dtime(dtime_str: str) -> int:
@@ -28,8 +31,21 @@ def _interval_id_from_dtime(dtime_str: str) -> int:
 def fetch_demand(day: date) -> pd.DataFrame:
     url = f"{PSE_BASE}/his-wlk-cal"
     params = {"$filter": f"business_date eq '{day.isoformat()}'"}
-    resp = httpx.get(url, params=params, timeout=30)
-    resp.raise_for_status()
+    last_exc: Exception | None = None
+    for attempt in range(1, FETCH_RETRIES + 1):
+        try:
+            resp = httpx.get(url, params=params, timeout=30)
+            resp.raise_for_status()
+            break
+        except (httpx.TimeoutException, httpx.TransportError, httpx.HTTPStatusError) as exc:
+            last_exc = exc
+            # Don't retry 4xx — those are our fault (bad date, retired endpoint).
+            if isinstance(exc, httpx.HTTPStatusError) and 400 <= exc.response.status_code < 500:
+                raise
+            if attempt < FETCH_RETRIES:
+                time.sleep(RETRY_BASE_DELAY ** attempt)
+    else:
+        raise last_exc  # type: ignore[misc]
     records = resp.json().get("value", [])
     df = pd.DataFrame(records)
     if df.empty:
@@ -58,7 +74,9 @@ def run(start: date, end: date) -> None:
             df = fetch_demand(day)
             if not df.empty:
                 upload_parquet(df, source="pse", dataset="demand", partition_date=day)
-        except Exception as exc:
+        except (httpx.HTTPError, ValueError, KeyError) as exc:
+            # Log and skip the day on known-transient / known-data errors so the
+            # backfill keeps moving. Anything else (auth, OS, bug) propagates.
             print(f"[pse] {day} failed: {exc}")
         day += timedelta(days=1)
 

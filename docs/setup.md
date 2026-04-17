@@ -2,6 +2,14 @@
 
 Full reproducibility instructions for the Polish Energy Market Data Platform.
 
+## Known limitation
+
+ENTSO-E generation queries for post-2024 non-PL zones return XML payloads that `entsoe-py 0.7.11` cannot parse (wraps as `RetryError[ValueError]`). The Spark backfill takes a `SKIP_GENERATION=1` env flag to skip these calls; the `entsoe_eu_generation` BQ table will remain empty until a workaround lands. Polish generation (via `ingestion/fetch_entsoe.py`) is fully populated.
+
+## Git Bash on Windows
+
+Every `docker run` in this guide assumes a POSIX shell. If you're on Git Bash under Windows, prefix each `docker run` with `MSYS_NO_PATHCONV=1` so the `-v $(pwd)/…` bind mount isn't rewritten to a Windows temp path.
+
 ## Prerequisites
 
 - Google Cloud account with billing enabled
@@ -108,9 +116,12 @@ docker run --rm --network=de-zoomcamp-project_default \
 
 ## 8. Run dbt
 
+`dbt seed` must run before `dbt run` — the `dim_region_mapping` seed is a required upstream dependency for every EU mart.
+
 ```bash
 cd dbt
 dbt deps
+dbt seed
 dbt run
 dbt test
 dbt docs generate && dbt docs serve
@@ -134,9 +145,12 @@ docker run --rm \
     -e SPARK_TEMP_BUCKET=$SPARK_TEMP_BUCKET \
     -e ENTSOE_API_KEY=$ENTSOE_API_KEY \
     -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json \
+    -e SKIP_GENERATION=1 \
     de-zoomcamp-spark:latest \
     jobs.backfill_entsoe --start 2022 --end 2025
 ```
+
+> `SKIP_GENERATION=1` avoids the known ENTSO-E generation parsing issue for non-PL post-2024 data. Without it, each zone-year costs ~5 min on exponential retries. See "Known limitation" at the top.
 
 **Load raw parquet into BQ**:
 
@@ -177,6 +191,6 @@ The daily path is wired up in Kestra (`spark_daily` flow, 07:00 UTC cron).
 ## 10. Connect Looker Studio
 
 1. Go to https://lookerstudio.google.com/
-2. Create a BigQuery data source → select `energy_marts.fct_daily_prices`
+2. Create a BigQuery data source → select `energy_marts_marts.fct_daily_prices` (dbt's `+schema: marts` config produces the physical dataset name `energy_marts_marts`; see `dashboard/README.md` for the full list of mart tables)
 3. Build at least 2 charts (e.g., price trend line + commodity correlation heatmap)
 4. Copy public link to main README

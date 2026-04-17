@@ -33,4 +33,6 @@ tasks:
       BATCH_SIZE: "200"
       GCP_PROJECT: "{{ vars.gcp_project }}"
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+    volumes:
+      - "{{ vars.gcp_key_path }}:/tmp/gcp-key.json:ro"
     networkMode: "de-zoomcamp-project_default"

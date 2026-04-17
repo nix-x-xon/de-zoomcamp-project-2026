@@ -16,6 +16,7 @@ import logging
 import os
 from datetime import date, timedelta
 
+from google.cloud import bigquery
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 
@@ -25,7 +26,28 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 log = logging.getLogger(__name__)
 
 
+def _delete_partitions(table: str, partition_field: str, dates: list[str]) -> None:
+    if not dates:
+        return
+    project, dataset, table_id = table.split(".")
+    client = bigquery.Client(project=project)
+    # Guard against cold-start: skip if the table doesn't exist yet (first load).
+    try:
+        client.get_table(table)
+    except Exception:
+        log.info("Target %s does not exist yet; skipping pre-delete", table)
+        return
+    in_list = ",".join(f"DATE '{d}'" for d in dates)
+    query = f"DELETE FROM `{project}.{dataset}.{table_id}` WHERE {partition_field} IN ({in_list})"
+    log.info("Deleting %d overlapping partitions from %s", len(dates), table)
+    client.query(query).result()
+
+
 def write_to_bq(df: DataFrame, table: str, partition_field: str, cluster_fields: list[str]) -> None:
+    # Delete-then-append makes the load idempotent: re-running the same
+    # partition set replaces rather than duplicates.
+    dates = [r[partition_field].isoformat() for r in df.select(partition_field).distinct().collect()]
+    _delete_partitions(table, partition_field, dates)
     (
         df.write.format("bigquery")
         .option("table", table)

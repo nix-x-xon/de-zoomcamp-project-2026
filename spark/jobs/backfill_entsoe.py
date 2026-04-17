@@ -106,19 +106,27 @@ def run(start_year: int, end_year: int, zones_filter: list[str] | None = None) -
                 continue
             start_ts = pd.Timestamp(f"{year}-01-01", tz="UTC")
             end_ts = pd.Timestamp(f"{year + 1}-01-01", tz="UTC")
+            prices_ok = False
+            gen_ok = True  # treat as OK when skipped so checkpoint still advances
             try:
                 prices = fetch_prices(client, code, start_ts, end_ts)
                 write_year(spark, prices, code, year, "eu_prices")
+                prices_ok = True
             except Exception as exc:
                 log.error("prices %s %s failed: %s", code, year, exc)
             if os.environ.get("SKIP_GENERATION", "0") != "1":
+                gen_ok = False
                 try:
                     gen = fetch_generation(client, code, start_ts, end_ts)
                     write_year(spark, gen, code, year, "eu_generation")
+                    gen_ok = True
                 except Exception as exc:
                     log.error("generation %s %s failed: %s", code, year, exc)
-            done.add(key)
-            save_checkpoint(bucket, done)
+            # Only checkpoint on success of every required operation so a
+            # restart retries the failed (zone, year) rather than skipping it.
+            if prices_ok and gen_ok:
+                done.add(key)
+                save_checkpoint(bucket, done)
 
     spark.stop()
     log.info("Backfill complete")
