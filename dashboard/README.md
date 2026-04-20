@@ -4,7 +4,7 @@ Looker Studio report comparing **Eastern vs Southern European** electricity mark
 
 ## Live link
 
-_paste the shareable Looker Studio URL here after publishing_
+**[Polish & European Power Markets — Eastern vs Southern](https://datastudio.google.com/u/1/reporting/a0ec59d4-bb8b-4b1f-b91c-caba4eb18a7c/page/p_ydjqp8qx2d)** (Looker Studio, public link)
 
 ## Known limitation
 

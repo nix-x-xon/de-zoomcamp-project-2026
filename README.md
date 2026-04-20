@@ -4,6 +4,8 @@ End-to-end data engineering pipeline ingesting Polish & European energy market d
 
 Built for the **DataTalks.Club Data Engineering Zoomcamp 2026** final project.
 
+**Live dashboard:** [Polish & European Power Markets — Eastern vs Southern](https://datastudio.google.com/u/1/reporting/a0ec59d4-bb8b-4b1f-b91c-caba4eb18a7c/page/p_ydjqp8qx2d) (Looker Studio)
+
 ## Problem Statement
 
 Energy traders and analysts need unified access to:
