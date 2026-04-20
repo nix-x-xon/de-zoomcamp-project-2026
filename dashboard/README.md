@@ -54,4 +54,12 @@ Project: `de-zoomcamp-energy-mf01`
 
 ## Screenshots
 
-_add PNGs for each page after publishing_
+All five pages are captured under [`screenshots/`](screenshots/):
+
+| File                                                               | Page                        |
+|--------------------------------------------------------------------|-----------------------------|
+| [`page_1_regional_overview.png`](screenshots/page_1_regional_overview.png) | Regional overview       |
+| [`page_2_country_drilldown.png`](screenshots/page_2_country_drilldown.png) | Country drilldown       |
+| [`page_3_duck_curve.png`](screenshots/page_3_duck_curve.png)               | Duck curve              |
+| [`page_4_poland_and_drivers.png`](screenshots/page_4_poland_and_drivers.png) | Poland & drivers      |
+| [`page_5_realtime_demand.png`](screenshots/page_5_realtime_demand.png)     | Real-time demand        |

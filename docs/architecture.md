@@ -37,20 +37,29 @@
 
 ## Partitioning & Clustering
 
-| Table                       | Partition by   | Cluster by |
-|-----------------------------|----------------|------------|
-| `raw.pse_demand`            | `ingested_at`  | —          |
-| `raw.entsoe_prices_pl`      | `timestamp`    | `country`  |
-| `raw.yahoo_prices`          | `date`         | `ticker`   |
-| `raw.pse_demand_stream`     | `event_ts`     | `interval_id` |
-| `marts.fct_daily_prices`    | `price_date`   | `country`  |
-| `marts.fct_commodity_drivers`| `price_date`  | `ticker`   |
-| `marts.fct_intraday_demand` | `demand_date`  | `interval_id` |
+| Table                              | Partition (grain / field)     | Cluster by            |
+|------------------------------------|-------------------------------|-----------------------|
+| `raw.pse_demand`                   | DAY (load-time pseudo column) | —                     |
+| `raw.entsoe_prices_pl`             | DAY (load-time pseudo column) | —                     |
+| `raw.yahoo_prices`                 | DAY (load-time pseudo column) | —                     |
+| `raw.pse_demand_stream`            | DAY / `event_ts`              | `interval_id`         |
+| `raw.entsoe_eu_prices`             | DAY / `date`                  | `zone`                |
+| `raw.entsoe_eu_generation`         | DAY / `date`                  | `zone`, `fuel_type`   |
+| `raw.entsoe_eu_hourly_wide`        | MONTH / `date` (Spark-managed)| `zone`                |
+| `marts.fct_daily_prices`           | MONTH / `price_date`          | `country`             |
+| `marts.fct_commodity_drivers`      | MONTH / `price_date`          | `ticker`              |
+| `marts.fct_intraday_demand`        | MONTH / `demand_date`         | `interval_id`         |
+| `marts.fct_eu_daily_by_region`     | MONTH / `date`                | `region`, `zone_code` |
+| `marts.fct_eu_duck_curve`          | MONTH / `date`                | `region`, `zone_code` |
+| `marts.fct_eu_regional_summary`    | MONTH / `date`                | `region`              |
 
-**Why:** All analytical queries filter by date range first (trend analysis, backtests),
-then narrow to specific countries or tickers. Date partitioning reduces scanned bytes
-dramatically for monthly/quarterly views; clustering on `country`/`ticker` speeds up
-join/filter patterns in the marts without over-slicing.
+**Why:** All analytical queries filter by date range first (trend analysis, backtests, duck-curve
+comparisons), then narrow to specific zones, countries, tickers, or regions. Raw hourly-cadence
+tables keep DAY partitioning to match the upstream ingestion grain. The marts switch to MONTH
+partitioning because the dashboard queries span multi-week windows and MONTH partitions cut the
+partition-metadata overhead on tables with low per-day row counts. Clustering on
+`region` / `zone` / `country` / `ticker` speeds up the filter/group-by patterns in each mart
+without over-slicing.
 
 ## Choice Notes
 

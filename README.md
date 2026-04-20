@@ -89,7 +89,9 @@ The block below is a fast-path sketch that skips the ingestion backfill, Spark E
 
 ```bash
 # 1. Provision infra (2 GCS buckets + 2 BQ datasets + 7 raw tables)
-cd terraform && terraform init && terraform apply
+cd terraform
+cp terraform.tfvars.example terraform.tfvars   # then edit: set your project_id / region
+terraform init && terraform apply
 
 # 2. Start orchestration + streaming stack (Kestra, Kafka, Schema Registry, Postgres)
 docker compose up -d

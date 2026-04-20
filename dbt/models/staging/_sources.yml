@@ -10,8 +10,6 @@ sources:
         description: "Polish grid demand by 15-minute interval"
       - name: entsoe_prices_pl
         description: "Polish day-ahead electricity prices (EUR/MWh)"
-      - name: entsoe_generation_pl
-        description: "Polish generation by fuel type (MW)"
       - name: yahoo_prices
         description: "FX rates and commodity futures prices"
       - name: pse_demand_stream
