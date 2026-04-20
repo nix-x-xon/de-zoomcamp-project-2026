@@ -38,8 +38,10 @@ gcp-key*.json
 .idea/
 *.swp
 
-# Claude Code local state
+# Local tool state
 .claude/
+CLAUDE.md
+docs/PLAN.md
 
 # Local scratch scripts
 tmp_*.py
