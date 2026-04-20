@@ -40,3 +40,6 @@ gcp-key*.json
 
 # Claude Code local state
 .claude/
+
+# Local scratch scripts
+tmp_*.py
