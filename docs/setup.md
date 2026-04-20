@@ -49,6 +49,10 @@ cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 # edit tfvars
 cp dbt/profiles.yml.example ~/.dbt/profiles.yml
 # edit profiles.yml with your project & keyfile path
+
+# Export the .env values into the current shell — required for the docker run commands below
+# (they reference $GCS_BUCKET, $ENTSOE_API_KEY, $GCP_PROJECT, etc.)
+set -a; source .env; set +a
 ```
 
 ## 3. Provision infra

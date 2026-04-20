@@ -4,7 +4,9 @@ End-to-end data engineering pipeline ingesting Polish & European energy market d
 
 Built for the **DataTalks.Club Data Engineering Zoomcamp 2026** final project.
 
-**Live dashboard:** [Polish & European Power Markets — Eastern vs Southern](https://datastudio.google.com/u/1/reporting/a0ec59d4-bb8b-4b1f-b91c-caba4eb18a7c/page/p_ydjqp8qx2d) (Looker Studio)
+**Live dashboard:** [European Electricity Markets: Eastern vs Southern Comparison](https://datastudio.google.com/u/1/reporting/a0ec59d4-bb8b-4b1f-b91c-caba4eb18a7c/page/p_ydjqp8qx2d) (Looker Studio — public link). Sample page below; see [`dashboard/screenshots/`](dashboard/screenshots/) for all five pages.
+
+![Regional overview — Eastern vs Southern average daily prices](dashboard/screenshots/page_1_regional_overview.png)
 
 ## Problem Statement
 
@@ -83,19 +85,20 @@ This project consolidates fragmented sources (PSE, ENTSO-E, Yahoo Finance) into 
 
 ## Quick Start
 
-See [docs/setup.md](docs/setup.md) for the full reproducibility guide.
+The block below is a fast-path sketch that skips the ingestion backfill, Spark EU-wide job, and the streaming layer. For the full end-to-end path (GCP bootstrap, backfills, Spark, Kafka + Schema Registry, Looker connection), follow [docs/setup.md](docs/setup.md).
 
 ```bash
-# 1. Provision infra
+# 1. Provision infra (2 GCS buckets + 2 BQ datasets + 7 raw tables)
 cd terraform && terraform init && terraform apply
 
-# 2. Start orchestration
+# 2. Start orchestration + streaming stack (Kestra, Kafka, Schema Registry, Postgres)
 docker compose up -d
 
 # 3. Trigger ingestion flow in Kestra UI (http://localhost:8080)
+#    — or run ingestion/spark backfills manually per docs/setup.md §6 and §9
 
 # 4. Run dbt transforms
-cd dbt && dbt run && dbt test
+cd dbt && dbt deps && dbt seed && dbt run && dbt test
 ```
 
 ## Dashboard
