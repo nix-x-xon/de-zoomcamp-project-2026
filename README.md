@@ -1,4 +1,4 @@
-# Polish Energy Market Data Platform
+# European Electricity Markets: Eastern vs Southern Comparison
 
 End-to-end data engineering pipeline ingesting Polish & European energy market data into a cloud data warehouse with dbt transformations and a BI dashboard.
 

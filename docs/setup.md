@@ -1,6 +1,6 @@
 # Setup Guide
 
-Full reproducibility instructions for the Polish Energy Market Data Platform.
+Full reproducibility instructions for the **European Electricity Markets: Eastern vs Southern Comparison** project.
 
 ## Known limitation
 
