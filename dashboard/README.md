@@ -38,8 +38,8 @@ Project: `de-zoomcamp-energy-mf01`
 6. **Line**: `avg_price_eur_mwh` by `hour_utc`, one series per `region`. Source: `fct_eu_duck_curve`, filtered to spring/summer months (solar-heavy). Southern shows characteristic midday dip.
 
 ### Page 4 — Poland & commodity drivers
-7. **Dual-axis line**: PL daily `avg_price_eur_mwh` (`fct_daily_prices`) vs `TTF_GAS` close (`fct_commodity_drivers` filtered to `ticker='TTF_GAS'`, date-joined).
-8. **Line**: `close` by `date` for `BRENT`, `NAT_GAS_HH`, `EURPLN` — commodity/FX drivers.
+7. **Dual-axis line**: PL daily `avg_price_eur_mwh` (`fct_daily_prices`, date field = `price_date`) vs `close_price` (`fct_commodity_drivers` filtered to `ticker='TTF_GAS'`, date field = `price_date`, blended on date).
+8. **Line**: `close_price` by `price_date` for `BRENT`, `NAT_GAS_HH`, `EURPLN` — commodity/FX drivers.
 
 ### Page 5 — Real-time demand
 9. **Line**: `demand_mw` by `event_ts` from `fct_intraday_demand` (populated by the streaming stack at `docker compose up`).
